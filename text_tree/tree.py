@@ -1,6 +1,7 @@
 # coding: utf-8
 import re
 from collections import Counter
+from tqdm import tqdm
 
 
 class Tree(object):
@@ -88,10 +89,29 @@ class Tree(object):
         else:
             raise ValueError('`root` must be instance of str or list')
 
+    def evaluate(self, data):
+        """评估分类准确率
+
+        :param data: list of dict
+        :return:
+        """
+        m = []
+        for x in tqdm(data):
+            if self.match(x['text']):
+                m.append(x)
+
+        tl = [x for x in m if x['label'] == self.label]
+        p = round(len(tl)/(len(m)+0.00001), 4)
+        print("分类准确率（%s）：%.4f；预测数量：%i" % (str(self.label), p, len(m)))
+        return p
+
 
 class Forest(object):
-    def __init__(self):
-        self.trees = []
+    def __init__(self, trees=None):
+        if trees:
+            self.trees = trees
+        else:
+            self.trees = []
 
     def add_tree(self, tree):
         self.trees.append(tree)
@@ -115,4 +135,14 @@ class Forest(object):
             else:
                 return None
 
+    def evaluate(self, data, return_at_first=True):
+        """评估分类准确率
+
+        :param return_at_first:
+        :param data: list of dict
+        :return:
+        """
+        for row in data:
+            row['pred'] = self.predict(row['text'], return_at_first)
+        return data
 
